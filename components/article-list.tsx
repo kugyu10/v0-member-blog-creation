@@ -134,8 +134,15 @@ export default function ArticleList() {
   }, [toast])
 
   useEffect(() => {
+    // ユーザーが認証されていない場合は空の配列を表示
+    if (!user) {
+      setArticles([])
+      setLoading(false)
+      return
+    }
+
     fetchArticles()
-  }, [fetchArticles])
+  }, [fetchArticles, user])
 
   // 記事削除処理をメモ化
   const handleDelete = useCallback(

@@ -47,6 +47,10 @@ const CACHE_EXPIRY = 1000 * 60 * 5 // 5分間キャッシュを有効にする
 // キャッシュからデータを取得する関数
 function getFromCache<T>(key: string): { data: T | null; expired: boolean } {
   try {
+    if (typeof window === "undefined") {
+      return { data: null, expired: true }
+    }
+
     const cached = localStorage.getItem(key)
     if (!cached) return { data: null, expired: true }
 
@@ -62,6 +66,8 @@ function getFromCache<T>(key: string): { data: T | null; expired: boolean } {
 // キャッシュにデータを保存する関数
 function saveToCache<T>(key: string, data: T): void {
   try {
+    if (typeof window === "undefined") return
+
     localStorage.setItem(
       key,
       JSON.stringify({
@@ -147,11 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      if (data) {
+      if (data && data.length > 0) {
         const planInfo = {
-          id: data.plan_id,
-          name: data.plan_name,
-          description: data.plan_description,
+          id: data[0].plan_id,
+          name: data[0].plan_name,
+          description: data[0].plan_description,
         }
         setUserPlan(planInfo)
 
@@ -233,9 +239,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // ログアウト時にキャッシュをクリア
         try {
-          localStorage.removeItem(USER_CACHE_KEY)
-          localStorage.removeItem(ADMIN_CACHE_KEY)
-          localStorage.removeItem(PLAN_CACHE_KEY)
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(USER_CACHE_KEY)
+            localStorage.removeItem(ADMIN_CACHE_KEY)
+            localStorage.removeItem(PLAN_CACHE_KEY)
+          }
         } catch (e) {
           console.error("Failed to clear cache:", e)
         }
@@ -301,9 +309,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // キャッシュをクリア
       try {
-        localStorage.removeItem(USER_CACHE_KEY)
-        localStorage.removeItem(ADMIN_CACHE_KEY)
-        localStorage.removeItem(PLAN_CACHE_KEY)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(USER_CACHE_KEY)
+          localStorage.removeItem(ADMIN_CACHE_KEY)
+          localStorage.removeItem(PLAN_CACHE_KEY)
+        }
       } catch (e) {
         console.error("Failed to clear cache:", e)
       }

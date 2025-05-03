@@ -68,148 +68,173 @@ export function clearArticlesCache() {
 const articleCache: Record<string, { data: Article; timestamp: number }> = {}
 
 export async function getArticleById(id: string): Promise<Article | null> {
-  // キャッシュが有効かチェック
-  const now = Date.now()
-  if (articleCache[id] && now - articleCache[id].timestamp < CACHE_DURATION) {
-    return articleCache[id].data
-  }
+  try {
+    // キャッシュが有効かチェック
+    const now = Date.now()
+    if (articleCache[id] && now - articleCache[id].timestamp < CACHE_DURATION) {
+      return articleCache[id].data
+    }
 
-  const { data, error } = await supabase.from("articles").select("*").eq("id", id).single()
+    const { data, error } = await supabase.from("articles").select("*").eq("id", id).single()
 
-  if (error) {
-    console.error(`Error fetching article with id ${id}:`, error)
+    if (error) {
+      console.error(`Error fetching article with id ${id}:`, error)
+      return null
+    }
+
+    // キャッシュを更新
+    if (data) {
+      articleCache[id] = {
+        data,
+        timestamp: now,
+      }
+    }
+
+    return data
+  } catch (error) {
+    console.error(`Error in getArticleById with id ${id}:`, error)
     return null
   }
-
-  // キャッシュを更新
-  if (data) {
-    articleCache[id] = {
-      data,
-      timestamp: now,
-    }
-  }
-
-  return data
 }
 
 // 記事を作成
 export async function createArticle(articleInput: ArticleInput): Promise<Article> {
-  // 現在のユーザーを取得
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // 現在のユーザーを取得
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("ユーザーが認証されていません")
-  }
+    if (!user) {
+      throw new Error("ユーザーが認証されていません")
+    }
 
-  const newArticle = {
-    id: uuidv4(),
-    title: articleInput.title,
-    content: articleInput.content,
-    user_id: user.id,
-    access_level: articleInput.access_level || "FREE", // デフォルトはFREE
-    created_at: new Date().toISOString(),
-  }
+    const newArticle = {
+      id: uuidv4(),
+      title: articleInput.title,
+      content: articleInput.content,
+      user_id: user.id,
+      access_level: articleInput.access_level || "FREE", // デフォルトはFREE
+      created_at: new Date().toISOString(),
+    }
 
-  const { data, error } = await supabase.from("articles").insert(newArticle).select().single()
+    const { data, error } = await supabase.from("articles").insert(newArticle).select().single()
 
-  if (error) {
-    console.error("Error creating article:", error)
+    if (error) {
+      console.error("Error creating article:", error)
+      throw error
+    }
+
+    // キャッシュをクリア
+    clearArticlesCache()
+
+    return data
+  } catch (error) {
+    console.error("Error in createArticle:", error)
     throw error
   }
-
-  // キャッシュをクリア
-  clearArticlesCache()
-
-  return data
 }
 
 // 記事を更新
 export async function updateArticle(id: string, articleInput: ArticleInput): Promise<Article | null> {
-  // 現在のユーザーを取得
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // 現在のユーザーを取得
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("ユーザーが認証されていません")
-  }
+    if (!user) {
+      throw new Error("ユーザーが認証されていません")
+    }
 
-  const updateData = {
-    title: articleInput.title,
-    content: articleInput.content,
-    access_level: articleInput.access_level,
-    updated_at: new Date().toISOString(),
-  }
+    const updateData = {
+      title: articleInput.title,
+      content: articleInput.content,
+      access_level: articleInput.access_level,
+      updated_at: new Date().toISOString(),
+    }
 
-  const { data, error } = await supabase.from("articles").update(updateData).eq("id", id).select().single()
+    const { data, error } = await supabase.from("articles").update(updateData).eq("id", id).select().single()
 
-  if (error) {
-    console.error(`Error updating article with id ${id}:`, error)
+    if (error) {
+      console.error(`Error updating article with id ${id}:`, error)
+      throw error
+    }
+
+    // キャッシュを更新
+    if (data) {
+      articleCache[id] = {
+        data,
+        timestamp: Date.now(),
+      }
+      clearArticlesCache() // 一覧のキャッシュもクリア
+    }
+
+    return data
+  } catch (error) {
+    console.error(`Error in updateArticle with id ${id}:`, error)
     throw error
   }
-
-  // キャッシュを更新
-  if (data) {
-    articleCache[id] = {
-      data,
-      timestamp: Date.now(),
-    }
-    clearArticlesCache() // 一覧のキャッシュもクリア
-  }
-
-  return data
 }
 
 // 記事を削除
 export async function deleteArticle(id: string): Promise<boolean> {
-  // 現在のユーザーを取得
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // 現在のユーザーを取得
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("ユーザーが認証されていません")
-  }
+    if (!user) {
+      throw new Error("ユーザーが認証されていません")
+    }
 
-  const { error } = await supabase.from("articles").delete().eq("id", id)
+    const { error } = await supabase.from("articles").delete().eq("id", id)
 
-  if (error) {
-    console.error(`Error deleting article with id ${id}:`, error)
+    if (error) {
+      console.error(`Error deleting article with id ${id}:`, error)
+      throw error
+    }
+
+    // キャッシュから削除
+    delete articleCache[id]
+    clearArticlesCache() // 一覧のキャッシュもクリア
+
+    return true
+  } catch (error) {
+    console.error(`Error in deleteArticle with id ${id}:`, error)
     throw error
   }
-
-  // キャッシュから削除
-  delete articleCache[id]
-  clearArticlesCache() // 一覧のキャッシュもクリア
-
-  return true
 }
 
 // ユーザーの記事を取得
 export async function getUserArticles(): Promise<Article[]> {
-  // 現在のユーザーを取得
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // 現在のユーザーを取得
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("ユーザーが認証されていません")
-  }
+    if (!user) {
+      throw new Error("ユーザーが認証されていません")
+    }
 
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id, title, content, created_at, updated_at, user_id, access_level")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+    const { data, error } = await supabase
+      .from("articles")
+      .select("id, title, content, created_at, updated_at, user_id, access_level")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("Error fetching user articles:", error)
+    if (error) {
+      console.error("Error fetching user articles:", error)
+      throw error
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error in getUserArticles:", error)
     throw error
   }
-
-  return data || []
 }
 
 // 記事のアクセスレベルを確認
