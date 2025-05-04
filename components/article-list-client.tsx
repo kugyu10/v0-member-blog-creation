@@ -24,7 +24,7 @@ const ArticleList = dynamic(() => import("@/components/article-list"), {
       ))}
     </div>
   ),
-  ssr: false,
+  ssr: true, // SSRを有効にする
 })
 
 export default function ArticleListClient() {

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic"
 
 // ヘッダーを動的にインポート
 const Header = dynamic(() => import("@/components/header"), {
-  ssr: false,
+  ssr: true, // SSRを有効にする
   loading: () => (
     <div className="border-b">
       <div className="container mx-auto py-4 flex items-center justify-between">

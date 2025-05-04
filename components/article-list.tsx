@@ -179,15 +179,30 @@ export default function ArticleList() {
         variant: "destructive",
       })
     } finally {
+      // 重要: データ取得が完了したら、必ずローディング状態を解除する
       setLoading(false)
     }
   }, [toast])
 
   // useEffectの依存配列を修正し、無限ループを防止
   useEffect(() => {
-    fetchArticles()
+    let isMounted = true
+
+    const loadArticles = async () => {
+      try {
+        await fetchArticles()
+      } catch (error) {
+        console.error("Failed to load articles:", error)
+      }
+    }
+
+    loadArticles()
+
+    return () => {
+      isMounted = false
+    }
     // fetchTriggerを依存配列に追加し、明示的に再取得をトリガーできるようにする
-  }, [fetchArticles, fetchTrigger])
+  }, [fetchTrigger, fetchArticles])
 
   // 記事削除処理をメモ化
   const handleDelete = useCallback(

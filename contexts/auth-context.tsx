@@ -245,6 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserPlan(null)
       }
 
+      // 重要: 認証状態の変更が完了したら、必ずローディング状態を解除する
       setIsLoading(false)
     })
 
