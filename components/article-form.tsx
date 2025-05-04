@@ -10,15 +10,28 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bold, Italic, List, ListOrdered, Heading2, Heading3, Quote, LinkIcon, ImageIcon, Lock } from "lucide-react"
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Heading2,
+  Heading3,
+  Quote,
+  LinkIcon,
+  ImageIcon,
+  Lock,
+  Globe,
+} from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import ImageUploadDialog from "@/components/image-upload-dialog"
 
 interface ArticleFormProps {
-  onSubmit: (title: string, content: string, accessLevel: "FREE" | "BASIC" | "PRO" | "VIP") => void
+  onSubmit: (title: string, content: string, accessLevel: "OPEN" | "FREE" | "BASIC" | "PRO" | "VIP") => void
   isSubmitting: boolean
   initialTitle?: string
   initialContent?: string
-  initialAccessLevel?: "FREE" | "BASIC" | "PRO" | "VIP"
+  initialAccessLevel?: "OPEN" | "FREE" | "BASIC" | "PRO" | "VIP"
 }
 
 export default function ArticleForm({
@@ -30,10 +43,11 @@ export default function ArticleForm({
 }: ArticleFormProps) {
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
-  const [accessLevel, setAccessLevel] = useState<"FREE" | "BASIC" | "PRO" | "VIP">(initialAccessLevel)
+  const [accessLevel, setAccessLevel] = useState<"OPEN" | "FREE" | "BASIC" | "PRO" | "VIP">(initialAccessLevel)
   const [errors, setErrors] = useState({ title: "", content: "" })
   const [activeTab, setActiveTab] = useState<string>("write")
   const { isAdmin } = useAuth()
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
 
   useEffect(() => {
     setTitle(initialTitle)
@@ -57,6 +71,10 @@ export default function ArticleForm({
 
     setErrors(newErrors)
     return isValid
+  }
+
+  const handleImageSelected = (imageUrl: string) => {
+    insertMarkdown(`![画像の説明](${imageUrl})`, "画像の説明")
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -129,6 +147,12 @@ export default function ArticleForm({
               <SelectValue placeholder="閲覧レベルを選択" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="OPEN">
+                <div className="flex items-center">
+                  <Globe className="h-4 w-4 mr-2 text-green-500" />
+                  <span>一般公開（ログインなしで閲覧可能）</span>
+                </div>
+              </SelectItem>
               <SelectItem value="FREE">ログインユーザーなら誰でも閲覧可能</SelectItem>
               <SelectItem value="BASIC">BASIC以上のプラン限定</SelectItem>
               <SelectItem value="PRO">PRO以上のプラン限定</SelectItem>
@@ -136,6 +160,7 @@ export default function ArticleForm({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
+            {accessLevel === "OPEN" && "ログインしていないユーザーを含め、誰でも閲覧できます"}
             {accessLevel === "FREE" && "すべてのログインユーザーが閲覧できます"}
             {accessLevel === "BASIC" && "BASIC、PRO、VIPプランのユーザーのみ閲覧できます"}
             {accessLevel === "PRO" && "PRO、VIPプランのユーザーのみ閲覧できます"}
@@ -182,12 +207,7 @@ export default function ArticleForm({
             >
               <LinkIcon className="h-4 w-4" />
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => insertMarkdown("![$1](URL)", "画像の説明")}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsImageDialogOpen(true)}>
               <ImageIcon className="h-4 w-4" />
             </Button>
           </div>
@@ -228,6 +248,11 @@ export default function ArticleForm({
           </Button>
         </div>
       </div>
+      <ImageUploadDialog
+        open={isImageDialogOpen}
+        onClose={() => setIsImageDialogOpen(false)}
+        onImageSelected={handleImageSelected}
+      />
     </form>
   )
 }

@@ -4,13 +4,16 @@ import { useEffect, useState, useCallback, memo, useMemo } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, Lock } from "lucide-react"
+import { Edit, Trash2, Lock, Globe } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate, stripMarkdown } from "@/lib/utils"
 import type { Article } from "@/lib/types"
 import { getArticles, deleteArticle } from "@/lib/article-service"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/contexts/auth-context"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { getProfileByUserId } from "@/lib/profile-service"
+import type { UserProfile } from "@/lib/types"
 
 // 個別の記事カードをメモ化
 const ArticleCard = memo(
@@ -33,17 +36,46 @@ const ArticleCard = memo(
 
     // 日付のフォーマットを事前に計算
     const formattedDate = useMemo(() => formatDate(article.created_at), [article.created_at])
+    const formattedUpdateDate = useMemo(
+      () => (article.updated_at ? formatDate(article.updated_at) : null),
+      [article.updated_at],
+    )
+
+    // プロフィール用のステート
+    const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null)
+
+    // 投稿者情報を取得
+    useEffect(() => {
+      const fetchAuthorProfile = async () => {
+        if (article.user_id) {
+          try {
+            const profile = await getProfileByUserId(article.user_id)
+            setAuthorProfile(profile)
+          } catch (error) {
+            console.error("プロフィール取得エラー:", error)
+          }
+        }
+      }
+
+      fetchAuthorProfile()
+    }, [article.user_id])
 
     return (
       <Card className="flex flex-col">
-        <CardHeader>
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <CardTitle className="line-clamp-2">
               <Link href={`/articles/${article.id}`} className="hover:underline">
                 {article.title}
               </Link>
             </CardTitle>
-            {article.access_level !== "FREE" && (
+            {article.access_level === "OPEN" && (
+              <Badge variant="outline" className="ml-2 bg-green-50 text-green-800 border-green-200">
+                <Globe className="mr-1 h-3 w-3" />
+                一般公開
+              </Badge>
+            )}
+            {article.access_level !== "FREE" && article.access_level !== "OPEN" && (
               <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-800 border-amber-200">
                 <Lock className="mr-1 h-3 w-3" />
                 {article.access_level}
@@ -51,11 +83,28 @@ const ArticleCard = memo(
             )}
           </div>
         </CardHeader>
-        <CardContent className="flex-grow">
-          <p className="text-sm text-muted-foreground mb-2">{formattedDate}</p>
-          <p className="line-clamp-3 text-muted-foreground">{truncatedContent}</p>
+        <CardContent className="flex-grow space-y-3 py-2">
+          {/* 記事本文 */}
+          <div>
+            <p className="line-clamp-3 text-muted-foreground">{truncatedContent}</p>
+          </div>
+
+          {/* 投稿者情報 */}
+          <div className="flex items-center pt-2">
+            <Avatar className="h-6 w-6 mr-2">
+              <AvatarImage src={authorProfile?.avatar_url || ""} alt={authorProfile?.nickname || "ユーザー"} />
+              <AvatarFallback className="text-xs">{authorProfile?.nickname?.charAt(0) || "U"}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium">{authorProfile?.nickname || "不明なユーザー"}</span>
+          </div>
+
+          {/* 作成日・更新日 */}
+          <div className="text-xs text-muted-foreground">
+            <p>作成日: {formattedDate}</p>
+            {formattedUpdateDate && <p>更新日: {formattedUpdateDate}</p>}
+          </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-between pt-2">
           <Link href={`/articles/${article.id}`}>
             <Button variant="outline" size="sm">
               閲覧
@@ -116,13 +165,6 @@ export default function ArticleList() {
 
   // 記事の取得をメモ化
   const fetchArticles = useCallback(async () => {
-    // ユーザーが認証されていない場合は何もしない
-    if (!user) {
-      setArticles([])
-      setLoading(false)
-      return
-    }
-
     try {
       setLoading(true)
       const data = await getArticles()
@@ -139,7 +181,7 @@ export default function ArticleList() {
     } finally {
       setLoading(false)
     }
-  }, [toast, user])
+  }, [toast])
 
   // useEffectの依存配列を修正し、無限ループを防止
   useEffect(() => {
@@ -189,9 +231,11 @@ export default function ArticleList() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground mb-4">まだ記事がありません。</p>
-        <Link href="/articles/new">
-          <Button>最初の記事を作成する</Button>
-        </Link>
+        {user && (
+          <Link href="/articles/_new">
+            <Button>最初の記事を作成する</Button>
+          </Link>
+        )}
       </div>
     )
   }

@@ -33,7 +33,7 @@ export function NewArticleButton() {
 
   if (canCreateArticle) {
     return (
-      <Link href="/articles/new">
+      <Link href="/articles/_new">
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
           新規記事作成

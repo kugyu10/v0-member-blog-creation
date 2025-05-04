@@ -52,7 +52,7 @@ const UserMenu = memo(function UserMenu({
   return (
     <div className="flex items-center gap-2">
       {canCreateArticle && (
-        <Link href="/articles/new">
+        <Link href="/articles/_new">
           <Button variant="outline" size="sm">
             <PlusCircle className="h-4 w-4 mr-2" />
             新規記事作成
@@ -169,16 +169,28 @@ export default function Header() {
           {isLoading ? (
             <div className="h-9 w-24 bg-muted animate-pulse rounded-md"></div>
           ) : user ? (
-            <UserMenu
-              user={user}
-              profile={profile}
-              userPlan={userPlan}
-              isAdmin={isAdmin}
-              canCreateArticle={canCreateArticle}
-              signOut={signOut}
-            />
+            <div className="flex items-center gap-4">
+              <Link href="/articles">
+                <Button variant="ghost" size="sm">
+                  記事一覧
+                </Button>
+              </Link>
+              <UserMenu
+                user={user}
+                profile={profile}
+                userPlan={userPlan}
+                isAdmin={isAdmin}
+                canCreateArticle={canCreateArticle}
+                signOut={signOut}
+              />
+            </div>
           ) : (
             <div className="flex items-center gap-2">
+              <Link href="/articles">
+                <Button variant="ghost" size="sm">
+                  記事一覧
+                </Button>
+              </Link>
               <Link href="/login">
                 <Button variant="ghost" size="sm">
                   ログイン

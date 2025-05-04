@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ReactMarkdown from "react-markdown"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Edit, Trash2, Lock } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Lock, Globe } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
 import type { Article } from "@/lib/types"
@@ -74,7 +74,7 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
           title: "記事を削除しました",
           description: "記事が正常に削除されました。",
         })
-        router.push("/")
+        router.push("/articles")
       } catch (err) {
         console.error(`Error deleting article with id ${params.id}:`, err)
         toast({
@@ -91,11 +91,11 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
   }
 
   if (!hasAccess) {
-    const planName = userPlan?.name || "FREE"
+    const planName = userPlan?.name || "未ログイン"
     return (
       <div className="container mx-auto py-8">
         <div className="mb-6">
-          <Link href="/">
+          <Link href="/articles">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
               記事一覧に戻る
@@ -109,11 +109,18 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
           <AlertDescription className="text-amber-700">
             この記事はより高いプランのユーザーのみ閲覧できます。現在のプラン: {planName}
             <div className="mt-4">
-              <Link href="/plans">
+              <Link href="/login">
                 <Button variant="outline" size="sm">
-                  プランをアップグレードする
+                  ログインする
                 </Button>
               </Link>
+              {user && (
+                <Link href="/plans" className="ml-2">
+                  <Button variant="outline" size="sm">
+                    プランをアップグレードする
+                  </Button>
+                </Link>
+              )}
             </div>
           </AlertDescription>
         </Alert>
@@ -125,7 +132,7 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
     return (
       <div className="container mx-auto py-8">
         <p className="text-red-500">{error || "記事が見つかりませんでした"}</p>
-        <Link href="/">
+        <Link href="/articles">
           <Button variant="outline" className="mt-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             記事一覧に戻る
@@ -140,7 +147,7 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
-        <Link href="/">
+        <Link href="/articles">
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             記事一覧に戻る
@@ -148,49 +155,59 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
         </Link>
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{article.title}</h1>
-          <div className="mt-2">
-            {article.access_level !== "FREE" && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
-                <Lock className="mr-1 h-3 w-3" />
-                {article.access_level === "BASIC" && "BASIC以上限定"}
-                {article.access_level === "PRO" && "PRO以上限定"}
-                {article.access_level === "VIP" && "VIP限定"}
-              </Badge>
-            )}
-          </div>
-        </div>
-        {(isAuthor || isAdmin) && (
-          <div className="flex gap-2">
-            <Link href={`/articles/${params.id}/edit`}>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                編集
+      {/* 1. タイトル部分 */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">{article.title}</h1>
+        <div className="mt-2">
+          {article.access_level === "OPEN" && (
+            <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
+              <Globe className="mr-1 h-3 w-3" />
+              一般公開
+            </Badge>
+          )}
+          {article.access_level !== "FREE" && article.access_level !== "OPEN" && (
+            <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+              <Lock className="mr-1 h-3 w-3" />
+              {article.access_level === "BASIC" && "BASIC以上限定"}
+              {article.access_level === "PRO" && "PRO以上限定"}
+              {article.access_level === "VIP" && "VIP限定"}
+            </Badge>
+          )}
+
+          {(isAuthor || isAdmin) && (
+            <div className="flex gap-2 mt-4">
+              <Link href={`/articles/${params.id}/edit`}>
+                <Button variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  編集
+                </Button>
+              </Link>
+              <Button variant="outline" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                削除
               </Button>
-            </Link>
-            <Button variant="outline" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-              削除
-            </Button>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="mb-8 text-sm text-muted-foreground">
-        <p>作成日: {formatDate(article.created_at)}</p>
-        {article.updated_at && <p>更新日: {formatDate(article.updated_at)}</p>}
+      {/* 2. 記事本文 */}
+      <div className="prose max-w-none dark:prose-invert mb-8">
+        <ReactMarkdown>{article.content}</ReactMarkdown>
       </div>
 
+      {/* 3. 投稿者情報 */}
       {authorProfile && (
-        <div className="mb-8">
+        <div className="mb-6 border-t pt-6">
+          <h2 className="text-lg font-semibold mb-3">投稿者</h2>
           <UserProfileCard profile={authorProfile} planName={userPlan?.name} />
         </div>
       )}
 
-      <div className="prose max-w-none dark:prose-invert">
-        <ReactMarkdown>{article.content}</ReactMarkdown>
+      {/* 4. 作成日・更新日 */}
+      <div className="text-sm text-muted-foreground border-t pt-4">
+        <p>作成日: {formatDate(article.created_at)}</p>
+        {article.updated_at && <p>更新日: {formatDate(article.updated_at)}</p>}
       </div>
     </div>
   )

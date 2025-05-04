@@ -5,13 +5,13 @@ export interface Article {
   user_id: string
   created_at: string
   updated_at?: string | null
-  access_level: "FREE" | "BASIC" | "PRO" | "VIP"
+  access_level: "OPEN" | "FREE" | "BASIC" | "PRO" | "VIP"
 }
 
 export interface ArticleInput {
   title: string
   content: string
-  access_level: "FREE" | "BASIC" | "PRO" | "VIP"
+  access_level: "OPEN" | "FREE" | "BASIC" | "PRO" | "VIP"
 }
 
 export interface UserProfile {

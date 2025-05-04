@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export interface Database {
   public: {
@@ -17,7 +11,7 @@ export interface Database {
           created_at: string
           updated_at: string | null
           user_id: string | null
-          access_level: "FREE" | "BASIC" | "PRO" | "VIP"
+          access_level: "FREE" | "BASIC" | "PRO" | "VIP" | "OPEN"
         }
         Insert: {
           id?: string
@@ -26,7 +20,7 @@ export interface Database {
           created_at?: string
           updated_at?: string | null
           user_id?: string | null
-          access_level?: "FREE" | "BASIC" | "PRO" | "VIP"
+          access_level?: "FREE" | "BASIC" | "PRO" | "VIP" | "OPEN"
         }
         Update: {
           id?: string
@@ -35,7 +29,7 @@ export interface Database {
           created_at?: string
           updated_at?: string | null
           user_id?: string | null
-          access_level?: "FREE" | "BASIC" | "PRO" | "VIP"
+          access_level?: "FREE" | "BASIC" | "PRO" | "VIP" | "OPEN"
         }
       }
       plans: {
@@ -156,7 +150,7 @@ export interface Database {
           created_at: string
           updated_at: string | null
           user_id: string | null
-          access_level: "FREE" | "BASIC" | "PRO" | "VIP"
+          access_level: "FREE" | "BASIC" | "PRO" | "VIP" | "OPEN"
         }[]
       }
       get_articles_for_user: {
@@ -170,7 +164,7 @@ export interface Database {
           created_at: string
           updated_at: string | null
           user_id: string | null
-          access_level: "FREE" | "BASIC" | "PRO" | "VIP"
+          access_level: "FREE" | "BASIC" | "PRO" | "VIP" | "OPEN"
         }[]
       }
       get_user_plan: {

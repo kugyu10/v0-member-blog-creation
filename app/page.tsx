@@ -1,38 +1,276 @@
-import { Suspense } from "react"
-import { NewArticleButton } from "@/components/new-article-button"
-import ArticleListClient from "@/components/article-list-client"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ArrowRight, BookOpen, Users, Shield, Crown } from "lucide-react"
 
 export default function Home() {
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">ブログ記事一覧</h1>
-        <NewArticleButton />
-      </div>
-      <Suspense
-        fallback={
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="border rounded-lg shadow-sm flex flex-col">
-                <div className="p-6 border-b">
-                  <div className="h-6 bg-muted rounded animate-pulse w-3/4"></div>
-                </div>
-                <div className="p-6 flex-grow">
-                  <div className="h-4 bg-muted rounded animate-pulse w-1/4 mb-2"></div>
-                  <div className="h-4 bg-muted rounded animate-pulse w-full mb-1"></div>
-                  <div className="h-4 bg-muted rounded animate-pulse w-full mb-1"></div>
-                  <div className="h-4 bg-muted rounded animate-pulse w-2/3"></div>
-                </div>
-                <div className="p-6 border-t flex justify-between">
-                  <div className="h-9 bg-muted rounded animate-pulse w-16"></div>
-                </div>
-              </div>
-            ))}
+    <div className="flex flex-col min-h-[calc(100vh-73px)]">
+      {/* ヒーローセクション */}
+      <section className="bg-gradient-to-b from-blue-50 to-white py-20 px-4">
+        <div className="container mx-auto max-w-5xl text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            あなたの知識を共有し、
+            <br className="hidden md:inline" />
+            <span className="text-primary">価値を生み出す</span>ブログプラットフォーム
+          </h1>
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            会員制ブログシステムで、あなたの専門知識を共有し、読者とつながりましょう。
+            様々なプランで柔軟に情報を公開できます。
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register">
+              <Button size="lg" className="px-8">
+                今すぐ始める
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/articles">
+              <Button size="lg" variant="outline" className="px-8">
+                記事を見る
+                <BookOpen className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-        }
-      >
-        <ArticleListClient />
-      </Suspense>
+        </div>
+      </section>
+
+      {/* 特徴セクション */}
+      <section className="py-20 px-4 bg-white">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-3xl font-bold text-center mb-12">主な特徴</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border flex flex-col items-center text-center">
+              <div className="bg-primary/10 p-3 rounded-full mb-4">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">コンテンツ管理</h3>
+              <p className="text-muted-foreground">
+                マークダウン形式で簡単に記事を作成・編集できます。画像やコードブロックも美しく表示されます。
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border flex flex-col items-center text-center">
+              <div className="bg-primary/10 p-3 rounded-full mb-4">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">アクセス制限</h3>
+              <p className="text-muted-foreground">
+                記事ごとにアクセスレベルを設定し、特定のプランの会員だけが閲覧できるプレミアムコンテンツを提供できます。
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border flex flex-col items-center text-center">
+              <div className="bg-primary/10 p-3 rounded-full mb-4">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">会員管理</h3>
+              <p className="text-muted-foreground">
+                会員登録、プロフィール管理、プラン管理など、充実した会員管理機能を提供します。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* プランセクション */}
+      <section className="py-20 px-4 bg-gray-50">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-3xl font-bold text-center mb-4">プラン</h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            あなたのニーズに合わせた様々なプランをご用意しています。
+            より高いプランでは、より多くのプレミアムコンテンツにアクセスできます。
+          </p>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">FREE</h3>
+                <p className="text-muted-foreground text-sm">基本機能のみ</p>
+              </div>
+              <ul className="space-y-2 mb-6 flex-grow">
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  FREEレベルの記事閲覧
+                </li>
+              </ul>
+              <Link href="/register">
+                <Button variant="outline" className="w-full">
+                  登録する
+                </Button>
+              </Link>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">BASIC</h3>
+                <p className="text-muted-foreground text-sm">追加機能が利用可能</p>
+              </div>
+              <ul className="space-y-2 mb-6 flex-grow">
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  FREEレベルの記事閲覧
+                </li>
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  BASICレベルの記事閲覧
+                </li>
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  記事の作成
+                </li>
+              </ul>
+              <Link href="/plans">
+                <Button className="w-full">詳細を見る</Button>
+              </Link>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-primary flex flex-col relative">
+              <div className="absolute -top-3 right-4 bg-primary text-white text-xs px-2 py-1 rounded-full">人気</div>
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">PRO</h3>
+                <p className="text-muted-foreground text-sm">すべての機能が利用可能</p>
+              </div>
+              <ul className="space-y-2 mb-6 flex-grow">
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  BASICのすべての機能
+                </li>
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  PROレベルの記事閲覧
+                </li>
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  優先サポート
+                </li>
+              </ul>
+              <Link href="/plans">
+                <Button className="w-full">詳細を見る</Button>
+              </Link>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold flex items-center">
+                  VIP
+                  <Crown className="h-4 w-4 ml-1 text-yellow-500" />
+                </h3>
+                <p className="text-muted-foreground text-sm">最上位プラン</p>
+              </div>
+              <ul className="space-y-2 mb-6 flex-grow">
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  PROのすべての機能
+                </li>
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  VIPレベルの記事閲覧
+                </li>
+                <li className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-green-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  専用サポート
+                </li>
+              </ul>
+              <Link href="/plans">
+                <Button variant="outline" className="w-full">
+                  詳細を見る
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTAセクション */}
+      <section className="py-20 px-4 bg-primary text-primary-foreground">
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold mb-4">今すぐ始めましょう</h2>
+          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+            あなたの知識や経験を共有し、読者とつながりましょう。
+            会員制ブログシステムで、あなたのコンテンツに価値を付けることができます。
+          </p>
+          <Link href="/register">
+            <Button size="lg" variant="secondary" className="px-8">
+              無料で登録する
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
     </div>
   )
 }

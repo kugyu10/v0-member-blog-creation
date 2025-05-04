@@ -21,11 +21,6 @@ export async function getArticles(): Promise<Article[]> {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user) {
-      // 未認証の場合は空の配列を返す
-      return []
-    }
-
     // キャッシュが有効かチェック
     const now = Date.now()
     if (articlesCache.data && now - articlesCache.timestamp < CACHE_DURATION) {
@@ -33,10 +28,17 @@ export async function getArticles(): Promise<Article[]> {
     }
 
     // 最適化されたクエリ - 必要な列のみを選択
-    const { data, error } = await supabase
+    let query = supabase
       .from("articles")
       .select("id, title, content, created_at, updated_at, user_id, access_level")
       .order("created_at", { ascending: false })
+
+    // 非ログインユーザーの場合はOPENの記事のみを取得
+    if (!user) {
+      query = query.eq("access_level", "OPEN")
+    }
+
+    const { data, error } = await query
 
     if (error) {
       console.error("Error fetching articles:", error)
@@ -244,6 +246,21 @@ export async function checkArticleAccess(articleId: string): Promise<boolean> {
 
     // 記事が存在しない場合
     if (!article) {
+      return false
+    }
+
+    // OPENレベルの記事は誰でもアクセス可能
+    if (article.access_level === "OPEN") {
+      return true
+    }
+
+    // 現在のユーザーを取得
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // OPENでない記事は、ログインしていない場合はアクセス不可
+    if (!user) {
       return false
     }
 
