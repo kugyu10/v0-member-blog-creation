@@ -17,22 +17,39 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 
 export default function ArticleDetail({ params }: { params: { id: string } }) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const { user, userPlan, isAdmin } = useAuth()
+
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [authorProfile, setAuthorProfile] = useState(null)
   const [hasAccess, setHasAccess] = useState(true)
-  const router = useRouter()
-  const { toast } = useToast()
-  const { user, userPlan, isAdmin } = useAuth()
+  const [redirecting, setRedirecting] = useState(false)
 
+  // 特殊なIDの場合は即座にリダイレクト
   useEffect(() => {
+    if (params.id === "_new" || params.id === "new") {
+      console.log("Redirecting from special ID:", params.id)
+      setRedirecting(true)
+      router.replace("/articles/new")
+      return
+    }
+
+    let isMounted = true
+
     async function fetchArticle() {
       try {
+        if (!isMounted) return
+
         setLoading(true)
 
         // まず記事へのアクセス権があるか確認
         const access = await checkArticleAccess(params.id)
+
+        if (!isMounted) return
+
         setHasAccess(access)
 
         if (!access) {
@@ -42,6 +59,9 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
         }
 
         const data = await getArticleById(params.id)
+
+        if (!isMounted) return
+
         setArticle(data)
 
         if (!data) {
@@ -52,19 +72,34 @@ export default function ArticleDetail({ params }: { params: { id: string } }) {
           // 記事作成者のプロフィールを取得
           if (data.user_id) {
             const profile = await getProfileByUserId(data.user_id)
-            setAuthorProfile(profile)
+            if (isMounted) {
+              setAuthorProfile(profile)
+            }
           }
         }
       } catch (err) {
         console.error(`Error fetching article with id ${params.id}:`, err)
-        setError("記事の読み込み中にエラーが発生しました")
+        if (isMounted) {
+          setError("記事の読み込み中にエラーが発生しました")
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchArticle()
-  }, [params.id])
+
+    return () => {
+      isMounted = false
+    }
+  }, [params.id, router])
+
+  // リダイレクト中の場合は何も表示しない
+  if (redirecting) {
+    return null
+  }
 
   const handleDelete = async () => {
     if (window.confirm("この記事を削除してもよろしいですか？")) {

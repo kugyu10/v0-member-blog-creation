@@ -71,6 +71,12 @@ const articleCache: Record<string, { data: Article; timestamp: number }> = {}
 
 export async function getArticleById(id: string): Promise<Article | null> {
   try {
+    // 特殊なIDの場合は早期にリターン
+    if (id === "_new" || id === "new") {
+      console.log("Special ID detected:", id)
+      return null
+    }
+
     // キャッシュが有効かチェック
     const now = Date.now()
     if (articleCache[id] && now - articleCache[id].timestamp < CACHE_DURATION) {
@@ -242,6 +248,12 @@ export async function getUserArticles(): Promise<Article[]> {
 // 記事のアクセスレベルを確認
 export async function checkArticleAccess(articleId: string): Promise<boolean> {
   try {
+    // 特殊なIDの場合は早期にリターン
+    if (articleId === "_new" || articleId === "new") {
+      console.log("Special ID detected in checkArticleAccess:", articleId)
+      return true
+    }
+
     const article = await getArticleById(articleId)
 
     // 記事が存在しない場合

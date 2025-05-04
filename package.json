@@ -60,11 +60,11 @@
     "zod": "^3.24.1",
     "@supabase/supabase-js": "latest",
     "@tailwindcss/typography": "latest",
-    "@supabase/auth-helpers-nextjs": "latest",
     "fs": "latest",
     "path": "latest",
+    "react-markdown": "latest",
     "uuid": "latest",
-    "react-markdown": "latest"
+    "@supabase/auth-helpers-nextjs": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

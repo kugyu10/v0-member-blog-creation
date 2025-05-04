@@ -52,7 +52,7 @@ const UserMenu = memo(function UserMenu({
   return (
     <div className="flex items-center gap-2">
       {canCreateArticle && (
-        <Link href="/articles/_new">
+        <Link href="/articles/new">
           <Button variant="outline" size="sm">
             <PlusCircle className="h-4 w-4 mr-2" />
             新規記事作成

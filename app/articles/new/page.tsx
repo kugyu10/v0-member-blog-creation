@@ -17,9 +17,12 @@ export default function NewArticlePage() {
   const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
-  const { user, userPlan, isAdmin } = useAuth()
+  const { user, userPlan, isAdmin, isLoading } = useAuth()
 
   useEffect(() => {
+    // 認証情報のロードが完了するまで待機
+    if (isLoading) return
+
     // ユーザーがBASIC以上のプランを持っているか、または管理者かをチェック
     const checkAuthorization = () => {
       setIsChecking(true)
@@ -35,9 +38,13 @@ export default function NewArticlePage() {
     }
 
     checkAuthorization()
-  }, [user, userPlan, isAdmin])
+  }, [user, userPlan, isAdmin, isLoading])
 
-  const handleSubmit = async (title: string, content: string, accessLevel: "FREE" | "BASIC" | "PRO" | "VIP") => {
+  const handleSubmit = async (
+    title: string,
+    content: string,
+    accessLevel: "OPEN" | "FREE" | "BASIC" | "PRO" | "VIP",
+  ) => {
     if (!isAuthorized) return
 
     setIsSubmitting(true)
@@ -65,7 +72,8 @@ export default function NewArticlePage() {
     }
   }
 
-  if (isChecking) {
+  // 認証情報のロード中
+  if (isLoading || isChecking) {
     return (
       <div className="container mx-auto py-8">
         <div className="text-center">
@@ -79,7 +87,7 @@ export default function NewArticlePage() {
     return (
       <div className="container mx-auto py-8">
         <div className="mb-6">
-          <Link href="/">
+          <Link href="/articles">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
               記事一覧に戻る
@@ -108,7 +116,7 @@ export default function NewArticlePage() {
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
-        <Link href="/">
+        <Link href="/articles">
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             記事一覧に戻る

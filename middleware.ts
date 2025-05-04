@@ -3,6 +3,17 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export async function middleware(req: NextRequest) {
+  // 特殊なパスのリダイレクト（最優先で処理）
+  if (req.nextUrl.pathname === "/articles/_new") {
+    return NextResponse.redirect(new URL("/articles/new", req.url))
+  }
+
+  // 特殊なIDのリダイレクト（正規表現でマッチング）
+  const articleIdMatch = req.nextUrl.pathname.match(/^\/articles\/(_new|new)(?:\/|$)/)
+  if (articleIdMatch && articleIdMatch[1] && articleIdMatch[1] !== "new") {
+    return NextResponse.redirect(new URL("/articles/new", req.url))
+  }
+
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
