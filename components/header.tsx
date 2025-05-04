@@ -45,10 +45,9 @@ const UserMenu = memo(function UserMenu({
   signOut: () => Promise<void>
 }) {
   // キャッシュバスティング用のタイムスタンプ
-  const avatarUrlWithTimestamp =
-    profile?.avatar_url && profile.avatar_url.includes("supabase.co")
-      ? `${profile.avatar_url}?t=${Date.now()}`
-      : profile?.avatar_url
+  const avatarUrlWithTimestamp = profile?.avatar_url
+    ? `${profile.avatar_url}${profile.avatar_url.includes("?") ? "&" : "?"}t=${Date.now()}`
+    : null
 
   return (
     <div className="flex items-center gap-2">
@@ -66,12 +65,12 @@ const UserMenu = memo(function UserMenu({
             {profile?.avatar_url ? (
               <Avatar className="h-6 w-6">
                 <AvatarImage src={avatarUrlWithTimestamp || ""} alt={profile.nickname || ""} />
-                <AvatarFallback>{profile.nickname?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{profile?.nickname?.charAt(0) || user?.email?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
             ) : (
               <User className="h-4 w-4" />
             )}
-            {profile?.nickname || user.email?.split("@")[0]}
+            {profile?.nickname || (user?.email ? user.email.split("@")[0] : "ユーザー")}
             {userPlan && (
               <Badge variant="outline" className="ml-1 font-normal">
                 <Crown className="h-3 w-3 mr-1 text-yellow-500" />
@@ -112,6 +111,7 @@ UserMenu.displayName = "UserMenu"
 
 export default function Header() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
   const { user, signOut, isLoading, isAdmin, userPlan } = useAuth()
 
   // BASIC以上のプランを持っているか、または管理者かをチェック
@@ -119,13 +119,15 @@ export default function Header() {
 
   // プロフィール読み込み関数をメモ化
   const loadProfile = useCallback(async () => {
-    if (!user) return
+    if (!user || profileLoading) return
 
     try {
+      setProfileLoading(true)
       // まずキャッシュをチェック
       const now = Date.now()
       if (profileCache.data && now - profileCache.timestamp < CACHE_DURATION) {
         setProfile(profileCache.data)
+        setProfileLoading(false)
         return
       }
 
@@ -142,12 +144,19 @@ export default function Header() {
       }
     } catch (err) {
       console.error("Error loading profile in header:", err)
+    } finally {
+      setProfileLoading(false)
     }
-  }, [user])
+  }, [user, profileLoading])
 
+  // userが変更されたときだけプロフィールを読み込む
   useEffect(() => {
-    loadProfile()
-  }, [loadProfile])
+    if (user) {
+      loadProfile()
+    } else {
+      setProfile(null)
+    }
+  }, [user, loadProfile])
 
   return (
     <header className="border-b">

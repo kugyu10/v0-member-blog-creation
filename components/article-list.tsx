@@ -110,11 +110,19 @@ export default function ArticleList() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [fetchTrigger, setFetchTrigger] = useState(0)
   const { toast } = useToast()
   const { user, isAdmin } = useAuth()
 
   // 記事の取得をメモ化
   const fetchArticles = useCallback(async () => {
+    // ユーザーが認証されていない場合は何もしない
+    if (!user) {
+      setArticles([])
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       const data = await getArticles()
@@ -131,18 +139,13 @@ export default function ArticleList() {
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, user])
 
+  // useEffectの依存配列を修正し、無限ループを防止
   useEffect(() => {
-    // ユーザーが認証されていない場合は空の配列を表示
-    if (!user) {
-      setArticles([])
-      setLoading(false)
-      return
-    }
-
     fetchArticles()
-  }, [fetchArticles, user])
+    // fetchTriggerを依存配列に追加し、明示的に再取得をトリガーできるようにする
+  }, [fetchArticles, fetchTrigger])
 
   // 記事削除処理をメモ化
   const handleDelete = useCallback(
@@ -150,7 +153,8 @@ export default function ArticleList() {
       if (window.confirm("この記事を削除してもよろしいですか？")) {
         try {
           await deleteArticle(id)
-          setArticles((prev) => prev.filter((article) => article.id !== id))
+          // 状態を直接更新する代わりに、再取得をトリガー
+          setFetchTrigger((prev) => prev + 1)
           toast({
             title: "記事を削除しました",
             description: "記事が正常に削除されました。",
@@ -176,7 +180,7 @@ export default function ArticleList() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500 mb-4">{error}</p>
-        <Button onClick={() => fetchArticles()}>再読み込み</Button>
+        <Button onClick={() => setFetchTrigger((prev) => prev + 1)}>再読み込み</Button>
       </div>
     )
   }

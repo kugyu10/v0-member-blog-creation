@@ -172,53 +172,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // セッションの初期化と監視を一度だけ設定
   useEffect(() => {
+    let isMounted = true
+
     // セッションの初期化
     const initSession = async () => {
+      if (!isMounted) return
+
       setIsLoading(true)
 
       try {
-        // まずキャッシュをチェック
-        const { data: cachedUser, expired } = getFromCache<User>(USER_CACHE_KEY)
+        // キャッシュがない場合は通常のセッション取得
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession()
 
-        if (cachedUser && !expired) {
-          setUser(cachedUser)
-          // キャッシュからユーザー情報を取得した場合でも、バックグラウンドで最新のセッションを確認
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
-          if (session) {
-            setSession(session)
-            setUser(session.user)
-            saveToCache(USER_CACHE_KEY, session.user)
-          }
-        } else {
-          // キャッシュがない場合は通常のセッション取得
-          const {
-            data: { session },
-            error,
-          } = await supabase.auth.getSession()
-
-          if (error) {
-            console.error("Error getting session:", error)
-          }
-
-          setSession(session)
-          setUser(session?.user || null)
-
-          if (session?.user) {
-            saveToCache(USER_CACHE_KEY, session.user)
-          }
+        if (error) {
+          console.error("Error getting session:", error)
         }
 
-        // 管理者ステータスとプラン情報を並行して取得
-        if (user) {
-          await Promise.all([checkAdminStatus(user), getUserPlanInfo(user)])
+        if (!isMounted) return
+
+        setSession(session)
+        setUser(session?.user || null)
+
+        if (session?.user) {
+          saveToCache(USER_CACHE_KEY, session.user)
+
+          // 管理者ステータスとプラン情報を取得
+          await Promise.all([checkAdminStatus(session.user), getUserPlanInfo(session.user)])
         }
       } catch (error) {
         console.error("Error initializing session:", error)
       } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -228,13 +219,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return
+
       setSession(session)
       setUser(session?.user || null)
 
       if (session?.user) {
         saveToCache(USER_CACHE_KEY, session.user)
 
-        // 管理者ステータスとプラン情報を並行して取得
+        // 管理者ステータスとプラン情報を取得
         await Promise.all([checkAdminStatus(session.user), getUserPlanInfo(session.user)])
       } else {
         // ログアウト時にキャッシュをクリア
@@ -256,9 +249,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
-  }, [checkAdminStatus, getUserPlanInfo, user])
+  }, [checkAdminStatus, getUserPlanInfo])
 
   // 新規ユーザー登録
   const signUp = useCallback(async (email: string, password: string) => {
