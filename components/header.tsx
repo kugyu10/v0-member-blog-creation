@@ -11,11 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { User, LogOut, Settings, Crown, UserCircle, PlusCircle } from "lucide-react"
+import { User, LogOut, Settings, Crown, UserCircle, PlusCircle, AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getCurrentUserProfile } from "@/lib/profile-service"
 import type { UserProfile } from "@/lib/types"
+import { testSupabaseConnection } from "@/lib/supabase"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // プロフィールキャッシュ
 let profileCache: {
@@ -112,7 +114,18 @@ UserMenu.displayName = "UserMenu"
 export default function Header() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
+  const [connectionError, setConnectionError] = useState(false)
   const { user, signOut, isLoading, isAdmin, userPlan } = useAuth()
+
+  // Supabase接続テスト
+  useEffect(() => {
+    async function checkConnection() {
+      const isConnected = await testSupabaseConnection()
+      setConnectionError(!isConnected)
+    }
+
+    checkConnection()
+  }, [])
 
   // BASIC以上のプランを持っているか、または管理者かをチェック
   const canCreateArticle = isAdmin || (userPlan && ["BASIC", "PRO", "VIP"].includes(userPlan?.name))
@@ -166,7 +179,23 @@ export default function Header() {
         </Link>
 
         <div className="flex items-center gap-4">
-          {isLoading ? (
+          {connectionError ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center">
+                    <Button variant="outline" size="sm" className="text-amber-600">
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      接続エラー
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Supabaseへの接続に失敗しました。環境変数を確認してください。</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : isLoading ? (
             <div className="h-9 w-24 bg-muted animate-pulse rounded-md"></div>
           ) : user ? (
             <div className="flex items-center gap-4">

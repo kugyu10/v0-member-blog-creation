@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/contexts/auth-context"
 import HeaderClient from "@/components/header-client"
+import EnvDebug from "@/components/env-debug"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
             <HeaderClient />
             <main>{children}</main>
             <Toaster />
+            <EnvDebug />
           </AuthProvider>
         </ThemeProvider>
       </body>

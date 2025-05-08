@@ -19,6 +19,7 @@ type AuthContextType = {
   isLoading: boolean
   isAdmin: boolean
   userPlan: PlanInfo | null
+  connectionError: boolean
   signUp: (
     email: string,
     password: string,
@@ -76,7 +77,7 @@ function saveToCache<T>(key: string, data: T): void {
       }),
     )
   } catch (e) {
-    console.error("Failed to save to cache:", e)
+    console.error("キャッシュの保存に失敗しました:", e)
   }
 }
 
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [userPlan, setUserPlan] = useState<PlanInfo | null>(null)
+  const [connectionError, setConnectionError] = useState(false)
   const router = useRouter()
 
   // ユーザーが管理者かどうかをチェック - 最適化版
@@ -110,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        console.error("Error checking admin status:", error)
+        console.error("管理者ステータスの確認中にエラーが発生しました:", error)
         setIsAdmin(false)
         return
       }
@@ -121,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // キャッシュに保存
       saveToCache(ADMIN_CACHE_KEY, isAdminValue)
     } catch (error) {
-      console.error("Error checking admin status:", error)
+      console.error("管理者ステータスの確認中にエラーが発生しました:", error)
       setIsAdmin(false)
     }
   }, [])
@@ -148,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        console.error("Error fetching user plan:", error)
+        console.error("ユーザープラン情報の取得中にエラーが発生しました:", error)
         setUserPlan(null)
         return
       }
@@ -167,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserPlan(null)
       }
     } catch (error) {
-      console.error("Error fetching user plan:", error)
+      console.error("ユーザープラン情報の取得中にエラーが発生しました:", error)
       setUserPlan(null)
     }
   }, [])
@@ -183,6 +185,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true)
 
       try {
+        // Supabase接続テスト
+        const { error: testError } = await supabase.from("articles").select("count", { count: "exact", head: true })
+
+        if (testError) {
+          console.error("データベース接続テストに失敗しました:", testError)
+          setConnectionError(true)
+          setIsLoading(false)
+          return
+        }
+
+        setConnectionError(false)
+
         // キャッシュがない場合は通常のセッション取得
         const {
           data: { session },
@@ -190,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession()
 
         if (error) {
-          console.error("Error getting session:", error)
+          console.error("セッション取得中にエラーが発生しました:", error)
         }
 
         if (!isMounted) return
@@ -205,7 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await Promise.all([checkAdminStatus(session.user), getUserPlanInfo(session.user)])
         }
       } catch (error) {
-        console.error("Error initializing session:", error)
+        console.error("セッション初期化中にエラーが発生しました:", error)
+        setConnectionError(true)
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -238,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem(PLAN_CACHE_KEY)
           }
         } catch (e) {
-          console.error("Failed to clear cache:", e)
+          console.error("キャッシュのクリアに失敗しました:", e)
         }
 
         setIsAdmin(false)
@@ -269,7 +284,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null, success: true }
     } catch (error) {
-      console.error("Error signing up:", error)
+      console.error("ユーザー登録中にエラーが発生しました:", error)
       return { error, success: false }
     }
   }, [])
@@ -290,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push("/")
         return { error: null, success: true }
       } catch (error) {
-        console.error("Error signing in:", error)
+        console.error("ログイン中にエラーが発生しました:", error)
         return { error, success: false }
       }
     },
@@ -310,12 +325,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem(PLAN_CACHE_KEY)
         }
       } catch (e) {
-        console.error("Failed to clear cache:", e)
+        console.error("キャッシュのクリアに失敗しました:", e)
       }
 
       router.push("/login")
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("ログアウト中にエラーが発生しました:", error)
     }
   }, [router])
 
@@ -327,11 +342,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isAdmin,
       userPlan,
+      connectionError,
       signUp,
       signIn,
       signOut,
     }),
-    [user, session, isLoading, isAdmin, userPlan, signUp, signIn, signOut],
+    [user, session, isLoading, isAdmin, userPlan, connectionError, signUp, signIn, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
